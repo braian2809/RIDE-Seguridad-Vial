@@ -152,30 +152,17 @@
             }
         };
         
-        // ========== TRADUCCIONES COMPLETAS PARA BICICLETA ==========
+        // ========== TRADUCCIONES ==========
         const traduccionesBici = {
-            es: {
-                articulo: "Artículo"
-            },
+            es: { articulo: "Artículo" },
             en: {
                 articulo: "Article",
-                
-                // Traducción de nombres de componentes
                 nombres_componentes: {
-                    "Casco": "Helmet",
-                    "Frenos": "Brakes",
-                    "Luces": "Lights",
-                    "Neumáticos": "Tires",
-                    "Cadena": "Chain",
-                    "Manillar": "Handlebar",
-                    "Pedales": "Pedals",
-                    "Reflectivos": "Reflectors",
-                    "Espejos": "Mirrors",
-                    "Sillín": "Seat",
-                    "Timbre": "Bell"
+                    "Casco": "Helmet", "Frenos": "Brakes", "Luces": "Lights",
+                    "Neumáticos": "Tires", "Cadena": "Chain", "Manillar": "Handlebar",
+                    "Pedales": "Pedals", "Reflectivos": "Reflectors", "Espejos": "Mirrors",
+                    "Sillín": "Seat", "Timbre": "Bell"
                 },
-                
-                // Traducción de descripciones de normas
                 descripciones_normas: {
                     "Usar casco de seguridad en vías interurbanas.": "Use a safety helmet on interurban roads.",
                     "No circular por autopistas ni túneles.": "Do not ride on highways or tunnels.",
@@ -201,8 +188,6 @@
                     "Usar chaleco reflectivo en carretera.": "Use a reflective vest on the road.",
                     "No estacionar en lugares prohibidos (andenes, esquinas).": "Do not park in prohibited places (sidewalks, corners)."
                 },
-                
-                // Traducción de descripciones del chequeo preventivo
                 descripciones_chequeo: {
                     "Inspeccionar visualmente por grietas. Debe estar certificado.": "Visually inspect for cracks. Must be certified.",
                     "Revisar pastillas y cableado. Deben responder al instante.": "Check pads and wiring. They must respond instantly.",
@@ -217,6 +202,21 @@
                     "Debe sonar fuerte y claro. Obligatorio en ciudades.": "Must sound loud and clear. Mandatory in cities."
                 }
             }
+        };
+        
+        // Instrucciones locales para el chequeo
+        const instruccionesLocales = {
+            'Casco': 'Inspeccionar visualmente por grietas. Debe estar certificado.',
+            'Frenos': 'Revisar pastillas y cableado. Deben responder al instante.',
+            'Luces': 'Luces delantera (blanca) y trasera (roja) funcionando.',
+            'Neumáticos': 'Presión adecuada (40-60 PSI) y sin cortes o desgaste.',
+            'Cadena': 'Lubricada, sin óxido y con tensión adecuada.',
+            'Manillar': 'Firme sin juego. Revisar ajuste de la potencia.',
+            'Pedales': 'Giran libremente. Sin grietas o desgaste.',
+            'Reflectivos': 'Limpios y visibles. Chaleco reflectivo recomendado.',
+            'Espejos': 'Opcional pero recomendado. Ajustados para buena visibilidad.',
+            'Sillín': 'Ajustado a la altura correcta. Sin grietas.',
+            'Timbre': 'Debe sonar fuerte y claro. Obligatorio en ciudades.'
         };
         
         function traducirNombreComponente(nombre, idioma) {
@@ -249,22 +249,19 @@
             idiomaActual = idiomaActual === 'es' ? 'en' : 'es';
             const btn = document.getElementById('btnIdioma');
             btn.innerHTML = idiomaActual === 'es' ? '<i class="fas fa-globe"></i> EN' : '<i class="fas fa-globe"></i> ES';
-            
+            localStorage.setItem('idioma_bici', idiomaActual);
             aplicarTraduccion();
-            
             cargarNormas();
             cargarChequeo();
-            
-            localStorage.setItem('idioma_bici', idiomaActual);
         }
-        
-        document.getElementById('btnIdioma').addEventListener('click', cambiarIdioma);
         
         const guardado = localStorage.getItem('idioma_bici');
-        if(guardado && guardado !== idiomaActual) {
+        if (guardado && guardado !== idiomaActual) {
             idiomaActual = guardado;
-            aplicarTraduccion();
         }
+        document.getElementById('btnIdioma').innerHTML = idiomaActual === 'es' ? '<i class="fas fa-globe"></i> EN' : '<i class="fas fa-globe"></i> ES';
+        document.getElementById('btnIdioma').addEventListener('click', cambiarIdioma);
+        aplicarTraduccion();
         
         async function cargarNormas() {
             const container = document.getElementById('normas-container');
@@ -295,12 +292,15 @@
                 const res = await fetch('/api/chequeo?tipo=Bicicleta');
                 const data = await res.json();
                 if (data.success && data.data && data.data.length > 0) {
-                    container.innerHTML = data.data.map(c => `
-                        <div style="padding:1rem; border-bottom:1px solid #eef2f2;">
-                            <strong>${traducirNombreComponente(c.nom_comp, idiomaActual)}</strong>
-                            <br><small>${traducirDescripcionChequeo(c.estado_opt || 'Revisar', idiomaActual)}</small>
-                        </div>
-                    `).join('');
+                    container.innerHTML = data.data.map(c => {
+                        const instruccion = instruccionesLocales[c.nom_comp] || 'Descripción no disponible';
+                        return `
+                            <div style="padding:1rem; border-bottom:1px solid #eef2f2;">
+                                <strong>${traducirNombreComponente(c.nom_comp, idiomaActual)}</strong>
+                                <br><small>${traducirDescripcionChequeo(instruccion, idiomaActual)}</small>
+                            </div>
+                        `;
+                    }).join('');
                     
                     if(checkContainer) {
                         checkContainer.innerHTML = data.data.map(c => `
@@ -318,7 +318,7 @@
             }
         }
         
-        document.getElementById('calcularRiesgo')?.addEventListener('click', async () => {
+        document.getElementById('calcularRiesgo')?.addEventListener('click', () => {
             const velocidad = document.getElementById('velocidad').value || 0;
             const divResultado = document.getElementById('resultado-riesgo');
             let riesgo = velocidad > 25 ? 'ALTO' : (velocidad > 15 ? 'MEDIO' : 'BAJO');
