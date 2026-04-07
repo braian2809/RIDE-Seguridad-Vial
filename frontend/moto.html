@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R.I.D.E. - Seguridad en Moto</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, #b96f0f 0%, #8a5500 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 32px;
+            margin: 1rem 0 2rem;
+        }
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn-calcular {
+            background: #b96f0f;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .back-button {
+            background: #1a3a3a;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-idioma {
+            background: #1a3a3a;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #6b8a8a;
+        }
+        .resultado-riesgo {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+        }
+        .riesgo-critico { background: #fee; color: #c00; border-left: 4px solid #c00; }
+        .riesgo-moderado { background: #fff3e0; color: #e67e22; border-left: 4px solid #e67e22; }
+        .riesgo-seguro { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #2e7d32; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-header">
+            <a href="/" class="back-button" id="btnVolver">← Volver al inicio</a>
+            <button class="btn-idioma" id="btnIdioma">
+                <i class="fas fa-globe"></i> EN
+            </button>
+        </div>
+        
+        <div class="page-header">
+            <h1 id="titulo">🏍️ Seguridad en Motocicleta</h1>
+            <p id="subtitulo">Revisa tu estado, conoce las normas y calcula tu nivel de riesgo</p>
+        </div>
+        
+        <div class="card">
+            <h2 id="normasTitulo"><i class="fas fa-gavel"></i> Normas de Tránsito</h2>
+            <div id="normas-container" class="loading">Cargando normas...</div>
+        </div>
+        
+        <div class="card">
+            <h2 id="chequeoTitulo"><i class="fas fa-clipboard-list"></i> Chequeo Preventivo</h2>
+            <div id="chequeo-container" class="loading">Cargando checklist...</div>
+        </div>
+        
+        <div class="card">
+            <h2 id="calculadoraTitulo"><i class="fas fa-chart-line"></i> Calculadora de Riesgo</h2>
+            <div>
+                <input type="number" id="velocidad" placeholder="Velocidad (km/h)" class="form-control">
+                <div id="componentes-check"></div>
+                <button id="calcularRiesgo" class="btn-calcular">Calcular Riesgo</button>
+                <div id="resultado-riesgo" class="resultado-riesgo"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let idiomaActual = 'es';
+        
+        const textos = {
+            es: {
+                volver: "← Volver al inicio",
+                titulo: "🏍️ Seguridad en Motocicleta",
+                subtitulo: "Revisa tu estado, conoce las normas y calcula tu nivel de riesgo",
+                normas: "📋 Normas de Tránsito",
+                chequeo: "🔧 Chequeo Preventivo",
+                calculadora: "📊 Calculadora de Riesgo",
+                velocidad: "Velocidad (km/h)",
+                calcular: "Calcular Riesgo",
+                sin_normas: "No hay normas cargadas",
+                sin_componentes: "No hay componentes registrados",
+                error_normas: "Error cargando normas",
+                error_checklist: "Error cargando checklist",
+                buen_estado: "en buen estado",
+                cargando_normas: "Cargando normas...",
+                cargando_checklist: "Cargando checklist..."
+            },
+            en: {
+                volver: "← Back to home",
+                titulo: "🏍️ Motorcycle Safety",
+                subtitulo: "Check your status, know the rules and calculate your risk level",
+                normas: "📋 Traffic Regulations",
+                chequeo: "🔧 Preventive Check",
+                calculadora: "📊 Risk Calculator",
+                velocidad: "Speed (km/h)",
+                calcular: "Calculate Risk",
+                sin_normas: "No regulations loaded",
+                sin_componentes: "No registered components",
+                error_normas: "Error loading regulations",
+                error_checklist: "Error loading checklist",
+                buen_estado: "in good condition",
+                cargando_normas: "Loading regulations...",
+                cargando_checklist: "Loading checklist..."
+            }
+        };
+        
+        // ========== TRADUCCIONES COMPLETAS PARA MOTO ==========
+        const traduccionesMoto = {
+            es: {
+                articulo: "Artículo"
+            },
+            en: {
+                articulo: "Article",
+                
+                // Traducción de nombres de componentes
+                nombres_componentes: {
+                    "Aceite": "Oil",
+                    "Cadena/Correa": "Chain/Belt",
+                    "Casco": "Helmet",
+                    "Frenos": "Brakes",
+                    "Líquido frenos": "Brake fluid",
+                    "Luces": "Lights",
+                    "Neumáticos": "Tires",
+                    "Batería": "Battery",
+                    "Bujía": "Spark plug",
+                    "Calzado": "Footwear",
+                    "Espejos": "Mirrors",
+                    "Filtro de aire": "Air filter",
+                    "Guantes": "Gloves",
+                    "Refrigerante": "Coolant",
+                    "Suspensión": "Suspension",
+                    "Parabrisas": "Windshield"
+                },
+                
+                // Traducción de descripciones de normas
+                descripciones_normas: {
+                    "Usar casco certificado en todo momento.": "Use a certified helmet at all times.",
+                    "No exceder los límites de velocidad.": "Do not exceed speed limits.",
+                    "Mantenerse en el carril derecho.": "Stay in the right lane.",
+                    "Luces encendidas siempre.": "Lights on at all times.",
+                    "No adelantar por la derecha.": "Do not overtake on the right.",
+                    "Usar chaqueta con protecciones en codos y hombros.": "Use a jacket with elbow and shoulder protection.",
+                    "No realizar zigzag entre vehículos (filtering) a alta velocidad.": "Do not weave between vehicles (filtering) at high speed.",
+                    "Mantener las manos en el manillar en todo momento.": "Keep hands on the handlebars at all times.",
+                    "Usar calzado cerrado y pantalón largo.": "Use closed-toe shoes and long pants.",
+                    "Realizar mantenimiento preventivo cada 5000 km.": "Perform preventive maintenance every 5000 km.",
+                    "Las motos deben usar el carril izquierdo en autopistas.": "Motorcycles must use the left lane on highways.",
+                    "Prohibido adelantar por el arcén.": "No overtaking on the shoulder.",
+                    "Respetar los límites de velocidad en zonas escolares (30 km/h).": "Respect speed limits in school zones (30 km/h).",
+                    "Encender direccionales con al menos 3 segundos de anticipación.": "Turn on turn signals at least 3 seconds in advance.",
+                    "Las motos no pueden circular por ciclorrutas.": "Motorcycles cannot ride on bike paths.",
+                    "Conducir bajo efecto del alcohol (Grado 1: 0-39 mg/100ml)": "Driving under the influence of alcohol (Grade 1: 0-39 mg/100ml)",
+                    "Conducir bajo efecto del alcohol (Grado 2: 40-99 mg/100ml)": "Driving under the influence of alcohol (Grade 2: 40-99 mg/100ml)",
+                    "No portar licencia de conducción": "Not carrying a driver's license",
+                    "No portar SOAT vigente": "Not carrying valid SOAT",
+                    "No portar revisión técnico-mecánica": "Not carrying technical-mechanical inspection",
+                    "Mantener distancia de seguridad de 3 segundos.": "Maintain a safe distance of 3 seconds.",
+                    "Usar chaleco reflectivo en carretera.": "Use a reflective vest on the road.",
+                    "No estacionar en lugares prohibidos (andenes, esquinas).": "Do not park in prohibited places (sidewalks, corners).",
+                    "Respetar las señales de tránsito y semáforos.": "Obey traffic signs and traffic lights.",
+                    "No usar dispositivos móviles mientras conduces.": "Do not use mobile devices while driving.",
+                    "Revisar frenos y neumáticos antes de cada salida.": "Check brakes and tires before each ride."
+                },
+                
+                // Traducción de descripciones del chequeo preventivo
+                descripciones_chequeo: {
+                    "Nivel entre mínimo y máximo. Cambio cada 3000-5000km.": "Level between min and max. Change every 3000-5000km.",
+                    "Tensión adecuada (2-3cm de juego). Lubricada cada 500km.": "Proper tension (2-3cm play). Lubricated every 500km.",
+                    "Certificado DOT/ECE. Sin golpes ni grietas. Talle correcto.": "DOT/ECE certified. No impacts or cracks. Correct size.",
+                    "Pastillas con mínimo 2mm. Líquido de frenos nivel adecuado.": "Pads with minimum 2mm. Brake fluid at proper level.",
+                    "Nivel entre min/max. Cambio cada 2 años.": "Level between min/max. Change every 2 years.",
+                    "Alta, baja, direccionales, stop y patente funcionando.": "High, low, turn signals, brake and license plate lights working.",
+                    "Presión correcta (ver manual). Dibujo mínimo 1.6mm.": "Correct pressure (see manual). Minimum tread depth 1.6mm.",
+                    "Bornes limpios y ajustados. Carga adecuada (12.5V+).": "Clean and tight terminals. Proper charge (12.5V+).",
+                    "Electrodo sin carbón. Encendido correcto.": "Electrode without carbon. Proper ignition.",
+                    "Botas que cubran el tobillo. Suela antideslizante.": "Boots that cover the ankle. Non-slip sole.",
+                    "Ajustados para ver atrás sin mover la cabeza.": "Adjusted to see behind without moving your head.",
+                    "Limpio. Reemplazar según manual (cada 10,000km).": "Clean. Replace according to manual (every 10,000km).",
+                    "Protección en nudillos. Buen agarre.": "Knuckle protection. Good grip.",
+                    "Nivel adecuado. Sin fugas en mangueras.": "Proper level. No leaks in hoses.",
+                    "Sin fugas de aceite. Amortiguación pareja.": "No oil leaks. Even damping.",
+                    "Limpio y sin grietas que afecten visibilidad.": "Clean and without cracks that affect visibility."
+                }
+            }
+        };
+        
+        function traducirNombreComponente(nombre, idioma) {
+            if (idioma === 'es') return nombre;
+            return traduccionesMoto.en.nombres_componentes[nombre] || nombre;
+        }
+        
+        function traducirDescripcionNorma(texto, idioma) {
+            if (idioma === 'es') return texto;
+            return traduccionesMoto.en.descripciones_normas[texto] || texto;
+        }
+        
+        function traducirDescripcionChequeo(texto, idioma) {
+            if (idioma === 'es') return texto;
+            return traduccionesMoto.en.descripciones_chequeo[texto] || texto;
+        }
+        
+        function aplicarTraduccion() {
+            document.getElementById('btnVolver').innerHTML = textos[idiomaActual].volver;
+            document.getElementById('titulo').innerHTML = textos[idiomaActual].titulo;
+            document.getElementById('subtitulo').innerHTML = textos[idiomaActual].subtitulo;
+            document.getElementById('normasTitulo').innerHTML = '<i class="fas fa-gavel"></i> ' + textos[idiomaActual].normas;
+            document.getElementById('chequeoTitulo').innerHTML = '<i class="fas fa-clipboard-list"></i> ' + textos[idiomaActual].chequeo;
+            document.getElementById('calculadoraTitulo').innerHTML = '<i class="fas fa-chart-line"></i> ' + textos[idiomaActual].calculadora;
+            document.getElementById('velocidad').placeholder = textos[idiomaActual].velocidad;
+            document.getElementById('calcularRiesgo').innerHTML = textos[idiomaActual].calcular;
+        }
+        
+        function cambiarIdioma() {
+            idiomaActual = idiomaActual === 'es' ? 'en' : 'es';
+            const btn = document.getElementById('btnIdioma');
+            btn.innerHTML = idiomaActual === 'es' ? '<i class="fas fa-globe"></i> EN' : '<i class="fas fa-globe"></i> ES';
+            
+            aplicarTraduccion();
+            
+            // Recargar los datos para actualizar los mensajes
+            cargarNormas();
+            cargarChequeo();
+            
+            localStorage.setItem('idioma_moto', idiomaActual);
+        }
+        
+        document.getElementById('btnIdioma').addEventListener('click', cambiarIdioma);
+        
+        const guardado = localStorage.getItem('idioma_moto');
+        if(guardado && guardado !== idiomaActual) {
+            idiomaActual = guardado;
+            aplicarTraduccion();
+        }
+        
+        async function cargarNormas() {
+            const container = document.getElementById('normas-container');
+            container.innerHTML = textos[idiomaActual].cargando_normas;
+            try {
+                const res = await fetch('/api/normas?tipo=Moto');
+                const data = await res.json();
+                if (data.success && data.data && data.data.length > 0) {
+                    container.innerHTML = data.data.map(n => `
+                        <div style="padding:1rem; border-bottom:1px solid #eef2f2;">
+                            <strong>${traduccionesMoto[idiomaActual].articulo} ${n.art_num}</strong>
+                            <p>${traducirDescripcionNorma(n.descripcion, idiomaActual)}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `<p>${textos[idiomaActual].sin_normas}</p>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<p>${textos[idiomaActual].error_normas}</p>`;
+            }
+        }
+        
+        async function cargarChequeo() {
+            const container = document.getElementById('chequeo-container');
+            const checkContainer = document.getElementById('componentes-check');
+            container.innerHTML = textos[idiomaActual].cargando_checklist;
+            try {
+                const res = await fetch('/api/chequeo?tipo=Moto');
+                const data = await res.json();
+                if (data.success && data.data && data.data.length > 0) {
+                    container.innerHTML = data.data.map(c => `
+                        <div style="padding:1rem; border-bottom:1px solid #eef2f2;">
+                            <strong>${traducirNombreComponente(c.nom_comp, idiomaActual)}</strong>
+                            <br><small>${traducirDescripcionChequeo(c.estado_opt || 'Revisar', idiomaActual)}</small>
+                        </div>
+                    `).join('');
+                    
+                    if(checkContainer) {
+                        checkContainer.innerHTML = data.data.map(c => `
+                            <label style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
+                                <input type="checkbox" class="check-riesgo" data-nombre="${c.nom_comp}">
+                                ${traducirNombreComponente(c.nom_comp, idiomaActual)} ${textos[idiomaActual].buen_estado}
+                            </label>
+                        `).join('');
+                    }
+                } else {
+                    container.innerHTML = `<p>${textos[idiomaActual].sin_componentes}</p>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<p>${textos[idiomaActual].error_checklist}</p>`;
+            }
+        }
+        
+        document.getElementById('calcularRiesgo')?.addEventListener('click', async () => {
+            const velocidad = document.getElementById('velocidad').value || 0;
+            const divResultado = document.getElementById('resultado-riesgo');
+            let riesgo = velocidad > 60 ? 'ALTO' : (velocidad > 40 ? 'MEDIO' : 'BAJO');
+            let clase = riesgo === 'ALTO' ? 'riesgo-critico' : (riesgo === 'MEDIO' ? 'riesgo-moderado' : 'riesgo-seguro');
+            let textoRiesgo = idiomaActual === 'es' ? `Riesgo ${riesgo}` : `Risk ${riesgo === 'ALTO' ? 'HIGH' : (riesgo === 'MEDIO' ? 'MEDIUM' : 'LOW')}`;
+            divResultado.innerHTML = `<div class="${clase}" style="padding:1rem;"><strong>${textoRiesgo}</strong></div>`;
+        });
+        
+        cargarNormas();
+        cargarChequeo();
+    </script>
+</body>
+</html>
